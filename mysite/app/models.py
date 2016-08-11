@@ -4,6 +4,9 @@ from django.db import models
 class Plan(models.Model):
     title = models.CharField(max_length=255)
 
+    def get_days(self):
+        return Day.objects.filter(plan=self)
+
     def __str__(self):
         return self.title
 

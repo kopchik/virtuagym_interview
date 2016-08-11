@@ -27,5 +27,5 @@ def schema_view(request):
     # return JsonResponse({})
 
 urlpatterns += [
-    url(r'api/', schema_view),
+    url(r'api/', schema_view, name='the-api'),
 ]
