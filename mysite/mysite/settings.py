@@ -27,6 +27,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+# for swagger to work properly
+LOGOUT_URL = '/logout'
 
 # Application definition
 
