@@ -18,3 +18,4 @@ class DayViewSet(viewsets.ModelViewSet):
 class ExerciseViewSet(viewsets.ModelViewSet):
     queryset = Exercise.objects.all().order_by('-id')
     serializer_class = ExerciseSerializer
+
