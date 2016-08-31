@@ -17,12 +17,17 @@ import Layer from 'grommet/components/Layer'
 import Table from 'grommet/components/Table'
 
 import Form from 'grommet/components/Form'
+import LoginForm from 'grommet/components/LoginForm'
 import FormField from 'grommet/components/FormField'
 
 import DateTime from 'grommet/components/DateTime'
 import Button from 'grommet/components/Button'
 import Edit from 'grommet/components/icons/base/Edit'
 import Spinning from 'grommet/components/icons/Spinning'
+import Notification from 'grommet/components/Notification'
+import Animate from 'grommet/components/Animate'
+
+import Checkmark from 'grommet/components/icons/base/Checkmark'
 
 
 // setup CSRF (from https://docs.djangoproject.com/en/1.10/ref/csrf/)
@@ -41,28 +46,106 @@ $.ajaxSetup({
 
 
 var MyApp = React.createClass({
+  getInitialState: function() {
+    return {notifications: [], authorized: false};
+  },
+  notify: function(msg) {
+    var new_notifications = this.state.notifications.concat(msg)
+    this.setState({notifications: new_notifications})
+  },
+  onNotificationClose: function() {
+    this.setState({notifications: []})
+  },
+  onLogin: function() {
+    this.setState({authorized: true})
+  },
+  componentDidMount: function() {
+    this.checkAuth()
+  },
+  checkAuth: function() {
+    $.ajax({
+      url: "/app/me/",
+      dataType: 'json',
+      cache: false,
+      success: function(data) {
+        console.log("Plans AJAX:", data)
+        this.setState({authorized: true});
+      }.bind(this),
+      error: function(xhr, status, err) {
+        console.log("AUTH ERR", status, err)
+      }.bind(this)
+    });
+  },
   render: function() {
+    if (!this.state.authorized) {
+      return <MyLoginForm onLogin={this.checkAuth} />
+    }
+
+    var notifications = this.state.notifications.map((e) =>
+      <Notification key={1} message={e} status="critical" size="small" closer={true} onClose={this.onNotificationClose} />
+    )
+
     return (
       <App inline={true}>
         <Header direction="row" large={true} pad="large">
           <Title>Fitness Plans</Title>
         </Header>
         <Section pad={{horizontal: 'medium'}}>
-        <Plans />
+        <Animate enter={{"animation": "fade", "duration": 300}} visible={true}>
+          {notifications}
+        </Animate>
+        <Plans app={this} />
         </Section>
       </App>
     )
   }
 })
 
-// TODO
-var LoginForm = React.createClass({
+
+var MyLoginForm = React.createClass({
+  getInitialState: function() {
+    return {errors: []};
+  },
+  onSubmit: function(params) {
+    console.log("SUBMIT", params)
+    $.post({
+      url: "/app/me/",
+      dataType: 'json',
+      data: params,
+      cache: false,
+      success: function(data) {
+        console.log("Plans AJAX:", data)
+        this.setState({errors: []});
+        this.props.onLogin()
+      }.bind(this),
+      error: function(xhr, status, err) {
+        this.setState({errors: [`AJAX failed:${status} ${err.toString()}`]})
+      }.bind(this)
+    });
+  },
   render: function() {
-    return(
-           <Layer onClose={false} closer={true} align="top">
-           <LoginForm onSubmit={false} />
-           </Layer>
-           )
+    console.log("ERRORS", this.state.errors)
+    return (
+      <Layer closer={false} align="top">
+        <LoginForm usernameType='text'
+                   title="Ho-ho! Someone is yet to login!"
+                   onSubmit={this.onSubmit}
+                   errors={this.state.errors} />
+      </Layer>
+    )
+    // return(
+    //        <Layer closer={false} align="top">
+    //         <Form>
+    //           <FormField htmlFor='username'>
+    //             <input id="username" type="text" />
+    //           </FormField>
+    //           <FormField htmlFor='password'>
+    //             <input id="password" type="password" />
+    //           </FormField>
+    //           <Button label="Login" primary={true} strong={true} onClick={this.onSubmit} />
+    //         </Form>
+    //        </Layer>
+    //        )
   }
 })
 
@@ -85,6 +168,7 @@ var Plans = React.createClass({
       }.bind(this),
       error: function(xhr, status, err) {
         console.error(this.props.url, status, err.toString());
+        notifications.push(`AJAX failed:${status} ${err.toString()}`)
       }.bind(this)
     });
   },
@@ -119,6 +203,7 @@ var Plans = React.createClass({
       var onClickHandler = () => this.onPlanEdit(e)
       return <Button label={e.title} icon={<Edit />} fill={true} key={e.url} onClick={onClickHandler} />
     })
+
     return (
       <Form>
         <FormField label="Plans">
@@ -158,7 +243,8 @@ var Editor = React.createClass({
     $.post({
       url: this.props.plans_url,
       dataType: 'json',
-      data: {title: "new title"},
+
+      data: {title: "<new plan>", days: [1]},
       headers: {
         "Authorization": "Basic " + window.btoa("user:password"),
       },
@@ -205,6 +291,7 @@ var Editor = React.createClass({
     })
     var days = this.state.data.days.map((day) => <tr key={day.url}><td>{day.date}</td></tr>)
     var title = title = this.state.data.title
+    var saveIcon = <Checkmark colorIndex="brand" />
 
     return (
       <Layer align="left" onClose={this.hide} closer={true}>
@@ -234,7 +321,8 @@ var Editor = React.createClass({
                   </Table>
               </FormField>
               <FormField>
-                <Button label="Save" onClick={this.props.onSave} />
+                <Button label="Save" icon={saveIcon} onClick={this.props.onSave} />
+                <Button label="Delete" icon={saveIcon} onClick={this.props.onDelete} />
                 <Button label="Cancel" onClick={this.props.onCancel} />
               </FormField>
         </Form>
