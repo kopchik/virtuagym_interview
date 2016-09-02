@@ -134,6 +134,7 @@ var MyLoginForm = React.createClass({
       cache: false,
       success: function(data) {
         this.setState({errors: []});
+        console.log("login ok")
         this.props.onLogin()
       }.bind(this),
       error: function(xhr, status, err) {
@@ -192,7 +193,6 @@ var Plans = React.createClass({
       dataType: 'json',
       cache: false,
       success: function(data) {
-        console.log("Plans AJAX:", data)
         this.getData()
       }.bind(this),
       error: function(xhr, status, err) {
@@ -257,7 +257,6 @@ var Editor = React.createClass({
   },
   componentWillMount: function() {
     this.getExcersizes()
-    console.log("WILL MOUNT")
     if (this.props.plan) {
       this.setState({plan: this.props.plan, is_new: false})
     }
@@ -280,7 +279,6 @@ var Editor = React.createClass({
     return {date: today, name: "(New Day)", exercises: []}
   },
   onDateChange: function(new_date) {
-    console.log(new_date)
     var cur_day = this.state.cur_day
     var new_state = $.extend(true, {}, this.state)
     new_state.plan.days[cur_day].date = new_date
@@ -313,8 +311,11 @@ var Editor = React.createClass({
     console.log("SELECT DAY", i,  this.state.exercises, "cur:", day.exercises, cur_exercises)
     this.setState({cur_day: i, cur_exercises: cur_exercises})
   },
-  onExcersizeSelect: function(cur_exercises) {
-    console.log("EXERC", cur_exercises)
+  onExersizeSelect: function(cur_exercises) {
+    if (this.state.exercises.length == 0) {
+      // no exercises added yet, nothing to do
+      return
+    }
     if (!Array.isArray(cur_exercises)) {
       cur_exercises = [cur_exercises]
     }
@@ -369,11 +370,16 @@ var Editor = React.createClass({
     });
   },
   render: function() {
-    console.log("RENDER")
     var plan = this.state.plan
     var cur_day = this.state.cur_day
     var exercises = this.state.exercises
     var cur_exercises = this.state.cur_exercises
+
+    var exercisesWidget = <tr><td>(add exercises via admin page)</td></tr>
+    if (exercises.length > 0) {
+      exercisesWidget = exercises.map((e) => <tr key={e.url}><td>{e.name}</td></tr>)
+    }
+
 
     return (
       <Layer align="center" flush={true}>
@@ -403,9 +409,9 @@ var Editor = React.createClass({
                 </FormField>
 
                 <FormField label="Excersizes (Shift/Ctrl to select multiple)">
-                    <Table selectable="multiple" onSelect={this.onExcersizeSelect} selected={cur_exercises}>
+                    <Table selectable="multiple" onSelect={this.onExersizeSelect} selected={cur_exercises}>
                       <tbody>
-                        {exercises.map((e) => <tr key={e.url}><td>{e.name}</td></tr>)}
+                        {exercisesWidget}
                       </tbody>
                     </Table>
                 </FormField>
