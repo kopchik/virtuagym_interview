@@ -25,6 +25,7 @@ class PlanSerializer(serializers.HyperlinkedModelSerializer):
         field = ['days']
 
     def create(self, validated_data):
+        """ Overrides default method to support nested models. """
         days_data = validated_data.pop('days')
         plan = Plan.objects.create(**validated_data)
         # nested models need to be created separately :(
@@ -36,6 +37,7 @@ class PlanSerializer(serializers.HyperlinkedModelSerializer):
         return plan
 
     def update(self, instance, validated_data):
+        """ Overrides default method to support nested models. """
         days_data = validated_data.pop('days')
         for key, value in validated_data.items():
             setattr(instance, key, value)
