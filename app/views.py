@@ -4,7 +4,7 @@ from rest_framework.permissions import AllowAny
 
 from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, login
 
 from app.models import Plan, Day, Exercise
 from app.serializers import PlanSerializer, DaySerializer, ExerciseSerializer
@@ -34,9 +34,12 @@ class CurrentUserView(APIView):
         password = request.POST['password']
         user = authenticate(username=username, password=password)
         if user is not None:
+            login(request, user)
             return JsonResponse({'username': user.username})
         return HttpResponse('Unauthorized', status=403)
 
     def get(self, request):
         user = request.user
+        if not user.is_authenticated:
+            return HttpResponse('Unauthorized', status=403)
         return JsonResponse({'username': user.username})

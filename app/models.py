@@ -10,6 +10,7 @@ class Plan(models.Model):
 
 class Day(models.Model):
     date = models.DateField()
+    name = models.CharField(max_length=255)
     plan = models.ForeignKey(Plan, related_name='days',
                              blank=True, on_delete=models.CASCADE)
     exercises = models.ManyToManyField('Exercise', blank=True)
